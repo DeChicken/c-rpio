@@ -2,7 +2,7 @@
 	Purpose:
 		WIP: This program drives a gpio pin on the raspberry pi
 	Author: David Craig
-	Version: 0.1.0
+	Version: 1.0.0
 */
 
 #include <stdio.h>

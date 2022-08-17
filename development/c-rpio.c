@@ -2,7 +2,6 @@
 	Purpose:
 		WIP: This program drives a gpio pin on the raspberry pi
 	Author: David Craig
-	Version: 0.1.0
 */
 
 #include <stdio.h>
@@ -11,6 +10,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+
+// Version
+#define C_RPIO_VERSION "1.1.0"
 
 // Addresses
 #define BCM2711_PERI_BASE 0xFE000000				// Refer to Sec 1.2.4 in BCM2711 Datasheet
