@@ -2,6 +2,7 @@
 	Purpose:
 		WIP: This program drives a gpio pin on the raspberry pi
 	Author: David Craig
+	Version: 0.1.0
 */
 
 #include <stdio.h>
@@ -56,7 +57,6 @@ void gpio_setup(void)
 				modification timestamp metadata"
 	*/
 	{
-		printf("Opened /dev/mem successfully\n");
 		
 		// Create mapping to the gpio registers
 		gpio_ptr = mmap(
@@ -337,9 +337,9 @@ int digitalWrite(int pin, int level)
 		return 0;
 }
 
-uint32_t read_reg(int offset)	// IN PROGRESS
+uint32_t read_reg(int offset)
 {
-	int flag = 1;
+	int flag = 1;	// This will go to 0 when function input is invalid
 
 	if (!offsetIsValid(offset))
 	{
@@ -350,14 +350,14 @@ uint32_t read_reg(int offset)	// IN PROGRESS
 
 	if (flag == 1)
 	{
-		uint32_t *reg_ptr = gpio_ptr + offset;
+		volatile uint32_t *reg_ptr = gpio_ptr + offset;
 		return *reg_ptr;
 	}
 	else
 		return 0;
 }
 
-int digitalRead(int pin)	// IN PROGRESS
+int digitalRead(int pin)
 {
 	// Read the value of pin from GPLEV0
 	// NOTE: There is a GPLEV1 register, but only GPIO pins 0-27 are available to the user.
@@ -373,6 +373,7 @@ int digitalRead(int pin)	// IN PROGRESS
 	if (flag == 1)
 	{
 		// Read the register
+		return (read_reg(GPLEV0) >> pin) & 0x1;	// Shift right <pin> times, then and with 1 (32-bit)
 	}
 	else
 		return -1;

@@ -14,10 +14,11 @@
 #define GPFSEL2 0x8		// GPFSEL2 offset from GPIO_BASE
 #define GPSET0 0x1C		// GPSET0 offset from GPIO_BASE
 #define GPCLR0 0x28		// GPCLR0 offset from GPIO_BASE
+#define GPLEV0 0x34		// GPLEV0 offset from GPIO_BASE
 
 // Limits
-#define MIN_PIN_INDEX 0		// Minimum GPIO pin index
-#define MAX_PIN_INDEX 27	// Maxmimum GPIO pin index
+#define MIN_PIN_INDEX 0				// Minimum GPIO pin index
+#define MAX_PIN_INDEX 27			// Maxmimum GPIO pin index
 #define GPIO_REG_MAX_OFFSET 0xF0	// Max register offset from GPIO_BASE
 
 // Constants
@@ -49,5 +50,7 @@ int digitalWrite(int pin, int level);
 int offsetIsValid(int offset);
 
 uint32_t read_reg(int offset);
+
+int digitalRead(int pin);
 
 #endif              // End of the #ifndef PI_GPIO_H
