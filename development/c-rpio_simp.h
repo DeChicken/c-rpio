@@ -35,7 +35,7 @@
 #define LOW 0
 
 // ---User Functions--- //
-void gpio_setup(void);
+volatile void *gpio_setup(void);
 
 void printlnBin32(uint32_t data);
 
@@ -49,8 +49,12 @@ int digitalWrite(int pin, int level);
 
 int offsetIsValid(int offset);
 
-uint32_t read_reg(int offset);
-
 int digitalRead(int pin);
+
+void pwm_setup();
+
+uint32_t read_reg(volatile void **mempp, int offset);
+
+int edit_reg_bits(volatile void **mempp, int offset, uint32_t bits, int length, int index);
 
 #endif              // End of the #ifndef PI_GPIO_H

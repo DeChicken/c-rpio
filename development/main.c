@@ -1,31 +1,20 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include "c-rpio.h"
+#include "c-rpio_simp.h"
 
 int main(void)
 {
-    int pin = 27;
-    int offset = 0;
+    int offset = 0x0;
 
-    pinMode(pin, INPUT);
-    printf("GPFSEL0 after pin %d set as input:\n", pin);
-    printlnBin32(read_reg(offset));
+    volatile void *gpptr = gpio_setup();
 
-    pinMode(pin, OUTPUT);
-    printf("GPFSEL0 after pin %d set as output:\n", pin);
-    printlnBin32(read_reg(offset));
-
-    printf("Setting pin %d to HIGH...\n");
-    digitalWrite(pin, HIGH);
-    printf("digitalRead(pin) returns %d\n", digitalRead(pin));
-    printf("Press any key to continue...");
-    getchar();
-
-    printf("Setting pin %d to LOW...\n");
-    digitalWrite(pin, LOW);
-    printf("digitalRead(pin) returns %d\n", digitalRead(pin));
-    printf("Press any key to continue...");
-    getchar();
-
+    for (int i = 0; i < 10; i++)
+    {
+        pinMode(i, INPUT);
+        printlnBin32(read_reg(&gpptr, 0x0));
+        pinMode(i, ALTFUNC3);
+        printlnBin32(read_reg(&gpptr, 0x0));
+        printf("\n");
+    }
 }
