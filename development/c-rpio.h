@@ -25,17 +25,17 @@
 #define GPFSEL_OPT_LEN 3	// GPFSEL registers option length (bits)
 #define INPUT 0
 #define OUTPUT 1
-#define ALTFUNC0 4
-#define ALTFUNC1 5
-#define ALTFUNC2 6
-#define ALTFUNC3 7
-#define ALTFUNC4 3
-#define ALTFUNC5 2
+#define ALT0 4
+#define ALT1 5
+#define ALT2 6
+#define ALT3 7
+#define ALT4 3
+#define ALT5 2
 #define HIGH 1
 #define LOW 0
 
 // ---User Functions--- //
-volatile void *gpio_setup(void);
+volatile void *mem_setup(off_t base_addr, size_t length);
 
 void printlnBin32(uint32_t data);
 
@@ -51,10 +51,12 @@ int offsetIsValid(int offset);
 
 int digitalRead(int pin);
 
-void pwm_setup();
-
 uint32_t read_reg(volatile void **mempp, int offset);
 
 int edit_reg_bits(volatile void **mempp, int offset, uint32_t bits, int length, int index);
+
+int pwm_cfg(int channel, int PWEN, int MODE, int RPTL, int SBIT, int POLA, int USEF, int MSEN);
+
+int analogWrite(int pin, int value);
 
 #endif              // End of the #ifndef PI_GPIO_H

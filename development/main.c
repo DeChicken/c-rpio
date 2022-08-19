@@ -1,28 +1,42 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include "c-rpio_simp.h"
+#include "c-rpio.h"
 
 int main(void)
 {
     int offset = 0x4;
-    int pin = 10;
+    int pin = 12;
     int delay = 3;
+    int value = 100;
 
-    volatile void *gpptr = gpio_setup();
+    int channel = 1;
+    int PWEN = 1;
+    int MODE = 0;
+    int RPTL = 0;
+    int SBIT = 0;
+    int POLA = 0;
+    int USEF = 0;
+    int MSEN = 0;
 
+    //printf("pwm_cfg returns %d\n", pwm_cfg(channel, PWEN, MODE, RPTL, SBIT, POLA, USEF, MSEN));
+    //printf("pwm_cfg returns %d\n", pwm_cfg(channel + 1, PWEN, MODE, RPTL, SBIT, POLA, USEF, MSEN));
+    //printf("analogWrite returns %d\n", analogWrite(pin, value));
+
+    /*
     pinMode(pin, OUTPUT);
-    digitalWrite(pin, LOW);
-
     while (1 == 1)
     {
-        sleep(delay);
         digitalWrite(pin, HIGH);
-        printf("Pin %d level is %d\n", pin, digitalRead(pin));
-        sleep(delay);
+        sleep(3);
         digitalWrite(pin, LOW);
-        printf("Pin %d level is %d\n", pin, digitalRead(pin));
-    
+        sleep(3);
     }
+    */
+
+    pinMode(pin, ALT0);
+    pinMode(pin + 1, ALT0);
+    analogWrite(pin, value);
+    analogWrite(pin + 1, value);
 
 }
