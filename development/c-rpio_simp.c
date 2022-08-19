@@ -249,3 +249,63 @@ int pinMode(int pin, int mode)
 		return 0;
 
 }
+
+int digitalRead(int pin)
+{
+	// Read the value of pin from GPLEV0
+	// NOTE: There is a GPLEV1 register, but only GPIO pins 0-27 are available on the header.
+
+	// Verify inputs
+	int flag = 1;	// If 1 at end of checks, run function. If not 1, error
+	if (!pinIsValid(pin))
+	{
+		printf("[ERROR] digitalRead() - Pin number of %d is invalid. Allowed pin numbers are 0 through 27 inclusive.\n", pin);
+		flag = 0;
+	}
+	
+	if (flag == 1)
+	{
+		// Read the register
+		return (read_reg(&gpio_ptr, GPLEV0) >> pin) & 0x1;	// Shift right <pin> times, then and with 1 (32-bit)
+	}
+	else
+		return -1;
+
+}
+
+int digitalWrite(int pin, int level)
+{
+	// Setup gpio_ptr if it is not yet setup
+    if (gpio_ptr == NULL)
+        gpio_ptr = gpio_setup();
+
+	// Error checking
+	int flag = 1;
+	if (!pinIsValid(pin))
+	{
+		printf("[ERROR] digitalWrite() - Pin number of %d is invalid. Allowed pin numbers are 0 through 27 inclusive.\n", pin);
+		flag = 0;
+	}
+	if (level != HIGH && level != LOW)
+	{
+		printf("[ERROR] digitalWrite() - Level is invalid. Allowed levels are 0 or 1.\n");
+		flag = 0;
+	}
+
+	// Functional code
+	if (flag == 1)
+	{
+		if (level == HIGH)	// Level is HIGH
+		{
+			edit_reg_bits(&gpio_ptr, GPSET0, HIGH, 1, pin);
+		}
+		else if (level == LOW)	// Level is LOW
+		{
+			edit_reg_bits(&gpio_ptr, GPCLR0, HIGH, 1, pin);
+		}
+		else
+			return -1;	// This should never happen
+	}
+	else
+		return 0;
+}

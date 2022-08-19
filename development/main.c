@@ -5,16 +5,24 @@
 
 int main(void)
 {
-    int offset = 0x0;
+    int offset = 0x4;
+    int pin = 10;
+    int delay = 3;
 
     volatile void *gpptr = gpio_setup();
 
-    for (int i = 0; i < 10; i++)
+    pinMode(pin, OUTPUT);
+    digitalWrite(pin, LOW);
+
+    while (1 == 1)
     {
-        pinMode(i, INPUT);
-        printlnBin32(read_reg(&gpptr, 0x0));
-        pinMode(i, ALTFUNC3);
-        printlnBin32(read_reg(&gpptr, 0x0));
-        printf("\n");
+        sleep(delay);
+        digitalWrite(pin, HIGH);
+        printf("Pin %d level is %d\n", pin, digitalRead(pin));
+        sleep(delay);
+        digitalWrite(pin, LOW);
+        printf("Pin %d level is %d\n", pin, digitalRead(pin));
+    
     }
+
 }

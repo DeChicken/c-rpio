@@ -7,6 +7,9 @@ SRCS := $(wildcard *.c)
 # Names of all possible object files
 OBJS := $(SRCS:%.c=%.o)
 
+# Names of all possible executables
+BINS := $(SRCS:%.c=%)
+
 all: ${OBJS} main
 
 # Compile sources into object files
