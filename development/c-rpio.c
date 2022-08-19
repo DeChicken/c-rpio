@@ -27,10 +27,12 @@
 #define GPCLR0 0x28		// GPCLR0 offset from GPIO_BASE
 #define GPLEV0 0x34		// GPLEV0 offset from GPIO_BASE
 #define CTL 0x0			// CTL offset from PWM_BASE
+#define STA 0x4			// STA offset from PWM_BASE
 #define RNG1 0x10		// RNG1 offset from PWM_BASE
 #define RNG2 0x20		// RNG2 offset from PWM_BASE
 #define DAT1 0x14		// DAT1 offset from PWM_BASE
 #define DAT2 0x24		// DAT2 offset from PWM_BASE
+#define FIF1 0x18		// FIF1 offset from PWM_BASE
 
 // Limits
 #define MIN_PIN_INDEX 0				// Minimum GPIO pin index
@@ -359,18 +361,22 @@ int pwm_cfg(int channel, int PWEN, int MODE, int RPTL, int SBIT, int POLA, int U
 	printf("cfg is : "); printlnBin32(cfg);
 	// Setup any final inputs to be used in writing to CTL
 	int channel_ctl_index = 0;	// Channel 1 bits in CTL start at index 0
-	int channel_ctl_len = 8;	// 7 bits in CTL pertain to channel 1, but an extra bit is added for CLRF
-
+	int channel_ctl_len = 8;
 
 	//int edit_reg_bits(volatile void **mempp, int offset, uint32_t bits, int length, int index)
 	if (channel == 2)
 	{
 		channel_ctl_index = 8;	// Channel 2 bits in CTL start at index 8
-		channel_ctl_len = 7;	// Channel 2 does not have the extra shift for CLRF
 	}
 	
 	// Write to CTL register
 	return edit_reg_bits(&pwm_ptr, CTL, cfg, channel_ctl_len, channel_ctl_index);	// Write to CTL
+}
+
+int pwm_cfg_clr(int channel)
+{
+	//int pwm_cfg(int channel, int PWEN, int MODE, int RPTL, int SBIT, int POLA, int USEF, int MSEN)
+	pwm_cfg(channel, 0, 0, 0, 0, 0, 0, 0);
 }
 
 // pin: the Arduino pin to write to. Allowed data types: int.
@@ -450,4 +456,22 @@ int analogWrite(int pin, int value)
 	}
 	else
 		return 0;	// Invalid inputs
+}
+
+void pwm_dump(void)
+{
+	printf("\npwm_dump:\n");
+	printf("CTL register:   "); printlnBin32(read_reg(&pwm_ptr, CTL));
+	printf("STA register:   "); printlnBin32(read_reg(&pwm_ptr, STA));
+	printf("RNG1 register:  "); printlnBin32(read_reg(&pwm_ptr, RNG1));
+	printf("DAT1 register:  "); printlnBin32(read_reg(&pwm_ptr, DAT1));
+	printf("RNG2 register:  "); printlnBin32(read_reg(&pwm_ptr, RNG2));
+	printf("DAT2 register:  "); printlnBin32(read_reg(&pwm_ptr, DAT2));
+	printf("FIF1 register:  "); printlnBin32(read_reg(&pwm_ptr, FIF1));
+}
+
+void mini_main(void)
+{
+	pwm_dump();
+	edit_reg_bits(&pwm_ptr, CTL, 0, 32, 0);
 }

@@ -57,6 +57,12 @@ int edit_reg_bits(volatile void **mempp, int offset, uint32_t bits, int length, 
 
 int pwm_cfg(int channel, int PWEN, int MODE, int RPTL, int SBIT, int POLA, int USEF, int MSEN);
 
+int pwm_cfg_clr(int channel);
+
 int analogWrite(int pin, int value);
+
+void mini_main(void);
+
+void pwm_dump(void);
 
 #endif              // End of the #ifndef PI_GPIO_H

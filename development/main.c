@@ -1,14 +1,17 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <time.h>
 #include "c-rpio.h"
 
 int main(void)
 {
     int offset = 0x4;
-    int pin = 12;
-    int delay = 3;
-    int value = 100;
+    int pin = 13;
+    int value = 3;
+
+    time_t delay = 0;
+    long delayms = 500;
 
     int channel = 1;
     int PWEN = 1;
@@ -19,24 +22,26 @@ int main(void)
     int USEF = 0;
     int MSEN = 0;
 
+    struct timespec delayts = {delay, delayms * 1000000};
+
     //printf("pwm_cfg returns %d\n", pwm_cfg(channel, PWEN, MODE, RPTL, SBIT, POLA, USEF, MSEN));
     //printf("pwm_cfg returns %d\n", pwm_cfg(channel + 1, PWEN, MODE, RPTL, SBIT, POLA, USEF, MSEN));
     //printf("analogWrite returns %d\n", analogWrite(pin, value));
 
     /*
-    pinMode(pin, OUTPUT);
+    pinMode(13, OUTPUT);
     while (1 == 1)
     {
-        digitalWrite(pin, HIGH);
-        sleep(3);
-        digitalWrite(pin, LOW);
-        sleep(3);
+        digitalWrite(13, HIGH);
+        nanosleep(&delayts, NULL);
+        digitalWrite(13, LOW);
+        nanosleep(&delayts, NULL);
     }
     */
 
     pinMode(pin, ALT0);
-    pinMode(pin + 1, ALT0);
     analogWrite(pin, value);
-    analogWrite(pin + 1, value);
 
+    mini_main();
+    
 }
