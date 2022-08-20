@@ -3,10 +3,10 @@
 
 #include <inttypes.h>
 
-// ---Constants--- //
 // Addresses
 #define BCM2711_PERI_BASE 0xFE000000				// Refer to Sec 1.2.4 in BCM2711 Datasheet
 #define GPIO_BASE (BCM2711_PERI_BASE + 0x200000)	// Refer to Sec 5.2 in BCM2711 Datasheet
+#define PWM_BASE (BCM2711_PERI_BASE + 0X20C000)		// Refer to Sec 8.6 in BCM2711 Datasheet
 
 // Offsets
 #define GPFSEL0 0x0		// GPFSEL0 offset from GPIO_BASE
@@ -15,11 +15,19 @@
 #define GPSET0 0x1C		// GPSET0 offset from GPIO_BASE
 #define GPCLR0 0x28		// GPCLR0 offset from GPIO_BASE
 #define GPLEV0 0x34		// GPLEV0 offset from GPIO_BASE
+#define CTL 0x0			// CTL offset from PWM_BASE
+#define STA 0x4			// STA offset from PWM_BASE
+#define RNG1 0x10		// RNG1 offset from PWM_BASE
+#define RNG2 0x20		// RNG2 offset from PWM_BASE
+#define DAT1 0x14		// DAT1 offset from PWM_BASE
+#define DAT2 0x24		// DAT2 offset from PWM_BASE
+#define FIF1 0x18		// FIF1 offset from PWM_BASE
 
 // Limits
 #define MIN_PIN_INDEX 0				// Minimum GPIO pin index
 #define MAX_PIN_INDEX 27			// Maxmimum GPIO pin index
 #define GPIO_REG_MAX_OFFSET 0xF0	// Max register offset from GPIO_BASE
+#define PWM_REG_MAX_OFFSET 0x24		// Max register offset from PWM_BASE
 
 // Constants
 #define GPFSEL_OPT_LEN 3	// GPFSEL registers option length (bits)
@@ -33,13 +41,12 @@
 #define ALT5 2
 #define HIGH 1
 #define LOW 0
+#define PWM_DEFAULT_RANGE 256
+#define REG_LEN_BITS 32
 
 // ---User Functions--- //
-volatile void *mem_setup(off_t base_addr, size_t length);
 
 void printlnBin32(uint32_t data);
-
-void printGPIO(void);
 
 int pinIsValid(int pin);
 
@@ -47,22 +54,10 @@ int pinMode(int pin, int mode);
 
 int digitalWrite(int pin, int level);
 
-int offsetIsValid(int offset);
-
 int digitalRead(int pin);
-
-uint32_t read_reg(volatile void **mempp, int offset);
-
-int edit_reg_bits(volatile void **mempp, int offset, uint32_t bits, int length, int index);
-
-int pwm_cfg(int channel, int PWEN, int MODE, int RPTL, int SBIT, int POLA, int USEF, int MSEN);
-
-int pwm_cfg_clr(int channel);
 
 int analogWrite(int pin, int value);
 
-void mini_main(void);
-
-void pwm_dump(void);
+char *printVersion(void);
 
 #endif              // End of the #ifndef PI_GPIO_H

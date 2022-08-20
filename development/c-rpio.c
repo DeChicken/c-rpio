@@ -10,50 +10,10 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include "c-rpio.h"		// Constants defined here
 
 // Version
-#define C_RPIO_VERSION "1.1.0"
-
-// Addresses
-#define BCM2711_PERI_BASE 0xFE000000				// Refer to Sec 1.2.4 in BCM2711 Datasheet
-#define GPIO_BASE (BCM2711_PERI_BASE + 0x200000)	// Refer to Sec 5.2 in BCM2711 Datasheet
-#define PWM_BASE (BCM2711_PERI_BASE + 0X20C000)		// Refer to Sec 8.6 in BCM2711 Datasheet
-
-// Offsets
-#define GPFSEL0 0x0		// GPFSEL0 offset from GPIO_BASE
-#define GPFSEL1 0x4		// GPFSEL1 offset from GPIO_BASE
-#define GPFSEL2 0x8		// GPFSEL2 offset from GPIO_BASE
-#define GPSET0 0x1C		// GPSET0 offset from GPIO_BASE
-#define GPCLR0 0x28		// GPCLR0 offset from GPIO_BASE
-#define GPLEV0 0x34		// GPLEV0 offset from GPIO_BASE
-#define CTL 0x0			// CTL offset from PWM_BASE
-#define STA 0x4			// STA offset from PWM_BASE
-#define RNG1 0x10		// RNG1 offset from PWM_BASE
-#define RNG2 0x20		// RNG2 offset from PWM_BASE
-#define DAT1 0x14		// DAT1 offset from PWM_BASE
-#define DAT2 0x24		// DAT2 offset from PWM_BASE
-#define FIF1 0x18		// FIF1 offset from PWM_BASE
-
-// Limits
-#define MIN_PIN_INDEX 0				// Minimum GPIO pin index
-#define MAX_PIN_INDEX 27			// Maxmimum GPIO pin index
-#define GPIO_REG_MAX_OFFSET 0xF0	// Max register offset from GPIO_BASE
-#define PWM_REG_MAX_OFFSET 0x24		// Max register offset from PWM_BASE
-
-// Constants
-#define GPFSEL_OPT_LEN 3	// GPFSEL registers option length (bits)
-#define INPUT 0
-#define OUTPUT 1
-#define ALT0 4
-#define ALT1 5
-#define ALT2 6
-#define ALT3 7
-#define ALT4 3
-#define ALT5 2
-#define HIGH 1
-#define LOW 0
-#define PWM_DEFAULT_RANGE 256
-#define REG_LEN_BITS 32
+#define C_RPIO_VERSION "2.0.0"
 
 // PHILOSOPHY
 // Make any functions a user might touch easy to debug
@@ -67,7 +27,7 @@ static volatile void *gpio_ptr = NULL;
 // Pointer to the pwm physical memory, null until pwm_setup() is run
 static volatile void *pwm_ptr = NULL;
 
-int offsetIsValid(int offset)
+static int offsetIsValid(int offset)
 {
 	// Check that offset is valid
 	if (offset % 4 != 0)	// Offset not aligned
@@ -88,7 +48,7 @@ int pinIsValid(int pin)
 		return 1;
 }
 
-volatile void *mem_setup(off_t base_addr, size_t length)
+static volatile void *mem_setup(off_t base_addr, size_t length)
 {	
 	int memfd;
 	volatile void *result_ptr;
@@ -123,8 +83,14 @@ volatile void *mem_setup(off_t base_addr, size_t length)
 
 //-------------------------------------- GPIO --------------------------------------//
 
-// read_reg IS FIXED
-uint32_t read_reg(volatile void **mempp, int offset)
+// read_reg
+// SUMMARY: Read a register
+// INPUTS:
+//     mempp  - address of memory location base pointer
+//     offset - offset of the register from the base memory location
+// OUTPUTS:
+//     returns the 32-bit value in the specified registar as a uint32_t
+static uint32_t read_reg(volatile void **mempp, int offset)
 {
 	int flag = 1;	// This will go to 0 when function input is invalid
 
@@ -156,7 +122,7 @@ uint32_t read_reg(volatile void **mempp, int offset)
 //     -1 - write not successful
 //      0 - invalid input
 //      1 - write successful
-int edit_reg_bits(volatile void **mempp, int offset, uint32_t bits, int length, int index)
+static int edit_reg_bits(volatile void **mempp, int offset, uint32_t bits, int length, int index)
 {
     // Validate inputs
     // mempp
@@ -196,7 +162,12 @@ int edit_reg_bits(volatile void **mempp, int offset, uint32_t bits, int length, 
     
 }
 
-
+// printlnBin32
+// SUMMARY: Print a 32-bit value in binary (separating bytes)
+// INPUTS:
+//     data - the 32-bit value to print
+// OUTPUTS:
+//     void
 void printlnBin32(uint32_t data)
 {
 	for (int i = 0; i < 4; i++)
@@ -211,6 +182,15 @@ void printlnBin32(uint32_t data)
 	printf("\n");
 }
 
+// pinMode
+// SUMMARY: Set a GPIO pin mode
+// INPUTS:
+//     pin  - the GPIO pin (on the header)
+//     mode - the mode to set
+// OUTPUTS:
+//     -1 - failed to set mode
+//      0 - invalid inputs
+//      1 - mode set successfully
 int pinMode(int pin, int mode)
 {
     // Setup gpio_ptr if it is not yet setup
@@ -258,6 +238,14 @@ int pinMode(int pin, int mode)
 
 }
 
+// digitalRead
+// SUMMARY: Read the value of a GPIO pin
+// INPUTS:
+//     pin - the GPIO pin to read
+// OUTPUTS:
+//     -1 - input invalid
+//      0 - pin is LOW
+//      1 - pin is HIGH
 int digitalRead(int pin)
 {
 	// Read the value of pin from GPLEV0
@@ -281,6 +269,15 @@ int digitalRead(int pin)
 
 }
 
+// digitalWrite
+// SUMMARY: Write a digital value to a GPIO pin
+// INPUTS:
+//     pin   - the GPIO pin to write to
+//     level - the digital value to write
+// OUTPUTS:
+//     -1 - failed to write
+//      0 - invalid inputs
+//      1 - write successful
 int digitalWrite(int pin, int level)
 {
 	// Setup gpio_ptr if it is not yet setup
@@ -320,7 +317,16 @@ int digitalWrite(int pin, int level)
 
 //-------------------------------------- PWM --------------------------------------//
 
-int pwm_cfg(int channel, int PWEN, int MODE, int RPTL, int SBIT, int POLA, int USEF, int MSEN)
+// pwm_cfg
+// SUMMARY: Set the PWM0 CTL register
+// INPUTS:
+//     channel - the pwm channel
+//     ~ remaining inputs - see the BCM peripherals datasheet for your Raspberry Pi (PWM section)
+// OUTPUTs:
+//     -1 - write not successful
+//      0 - invalid inputs
+//      1 - write successful
+static int pwm_cfg(int channel, int PWEN, int MODE, int RPTL, int SBIT, int POLA, int USEF, int MSEN)
 {
 	// Setup pwm_ptr if it has not already been done
 	if (pwm_ptr == NULL)
@@ -358,7 +364,6 @@ int pwm_cfg(int channel, int PWEN, int MODE, int RPTL, int SBIT, int POLA, int U
 	cfg <<= 1;
 	cfg |= PWEN;
 
-	printf("cfg is : "); printlnBin32(cfg);
 	// Setup any final inputs to be used in writing to CTL
 	int channel_ctl_index = 0;	// Channel 1 bits in CTL start at index 0
 	int channel_ctl_len = 8;
@@ -373,14 +378,29 @@ int pwm_cfg(int channel, int PWEN, int MODE, int RPTL, int SBIT, int POLA, int U
 	return edit_reg_bits(&pwm_ptr, CTL, cfg, channel_ctl_len, channel_ctl_index);	// Write to CTL
 }
 
-int pwm_cfg_clr(int channel)
+
+// pwm_cfg_clr
+// SUMMARY: Clear the PWM0 CTL register
+// INPUTS:
+//     channel - the pwm channel
+// OUTPUTs:
+//     -1 - write not successful
+//      0 - invalid inputs
+//      1 - write successful
+static int pwm_cfg_clr(int channel)
 {
-	//int pwm_cfg(int channel, int PWEN, int MODE, int RPTL, int SBIT, int POLA, int USEF, int MSEN)
-	pwm_cfg(channel, 0, 0, 0, 0, 0, 0, 0);
+	return pwm_cfg(channel, 0, 0, 0, 0, 0, 0, 0);
 }
 
-// pin: the Arduino pin to write to. Allowed data types: int.
-// value: the duty cycle: between 0 (always off) and 255 (always on). Allowed data types: int.
+// analogWrite
+// SUMMARY: Write an analog value to a pin
+// INPUTS:
+//     pin   - the GPIO pin to write to
+//     value - the analog value to write
+// OUTPUTs:
+//     -1 - write not successful
+//      0 - invalid inputs
+//      1 - write successful
 int analogWrite(int pin, int value)
 {
 	// Setup pwm_ptr if it has not already been done
@@ -425,16 +445,10 @@ int analogWrite(int pin, int value)
 		}
 
 		// Set the range to default
-		printf("RNG register for channel %d before write: 0x%x\n", channel, read_reg(&pwm_ptr, rng_reg));
 		edit_reg_bits(&pwm_ptr, rng_reg, PWM_DEFAULT_RANGE, REG_LEN_BITS, 0);
-		printf("RNG register for channel %d after write:  0x%x\n", channel, read_reg(&pwm_ptr, rng_reg));
 
 		// Set the DAT register for the inputted channel
-		printf("DAT register for channel %d before write: 0x%x\n", channel, read_reg(&pwm_ptr, dat_reg));
 		edit_reg_bits(&pwm_ptr, dat_reg, value, REG_LEN_BITS, 0);
-		printf("DAT register for channel %d after write:  0x%x\n", channel, read_reg(&pwm_ptr, dat_reg));
-
-		// I have access to the PWM0 module 
 
 		int aw_cfg[7] = {
 			1, // PWEN
@@ -447,18 +461,19 @@ int analogWrite(int pin, int value)
 		};
 
 		// Set up CTL for M/S mode and begin PWM
-		printf("CTL register before write: "); printlnBin32(read_reg(&pwm_ptr, CTL));
-		pwm_cfg(channel, aw_cfg[0], aw_cfg[1], aw_cfg[2], aw_cfg[3], aw_cfg[4], aw_cfg[5], aw_cfg[6]);
-		printf("CTL register after write:  "); printlnBin32(read_reg(&pwm_ptr, CTL));
-		printf("GPFSEL1 register:  "); printlnBin32(read_reg(&gpio_ptr, GPFSEL1));
-
-		return 1;
+		return pwm_cfg(channel, aw_cfg[0], aw_cfg[1], aw_cfg[2], aw_cfg[3], aw_cfg[4], aw_cfg[5], aw_cfg[6]);
 	}
 	else
 		return 0;	// Invalid inputs
 }
 
-void pwm_dump(void)
+// pwm_dump
+// SUMMARY: Dump various PWM0 register contents
+// INPUTS:
+//     void
+// OUTPUTS:
+//     void
+static void pwm_dump(void)
 {
 	printf("\npwm_dump:\n");
 	printf("CTL register:   "); printlnBin32(read_reg(&pwm_ptr, CTL));
@@ -468,10 +483,4 @@ void pwm_dump(void)
 	printf("RNG2 register:  "); printlnBin32(read_reg(&pwm_ptr, RNG2));
 	printf("DAT2 register:  "); printlnBin32(read_reg(&pwm_ptr, DAT2));
 	printf("FIF1 register:  "); printlnBin32(read_reg(&pwm_ptr, FIF1));
-}
-
-void mini_main(void)
-{
-	pwm_dump();
-	edit_reg_bits(&pwm_ptr, CTL, 0, 32, 0);
 }

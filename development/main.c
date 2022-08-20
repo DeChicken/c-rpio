@@ -8,10 +8,10 @@ int main(void)
 {
     int offset = 0x4;
     int pin = 13;
-    int value = 3;
+    int value = 128;
 
     time_t delay = 0;
-    long delayms = 500;
+    long delayms = 5;
 
     int channel = 1;
     int PWEN = 1;
@@ -38,9 +38,25 @@ int main(void)
         nanosleep(&delayts, NULL);
     }
     */
-
+    
     pinMode(pin, ALT0);
-    analogWrite(pin, value);
+    while (1 == 1)
+    {
+        for (int i = 0; i < 256; i++)
+        {
+            analogWrite(pin, i);
+            nanosleep(&delayts, NULL);
+        }
+        for (int i = 255; i >= 0; i--)
+        {
+            analogWrite(pin, i);
+            nanosleep(&delayts, NULL);
+        }
+    }
+    
+    
+    
+    
 
     mini_main();
     
