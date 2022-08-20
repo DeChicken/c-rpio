@@ -54,10 +54,4 @@ int main(void)
         }
     }
     
-    
-    
-    
-
-    mini_main();
-    
 }
