@@ -1,5 +1,5 @@
 # Summary
-The c-rpio library aims to provide functions for utilizing the functionality of the 40-pin GPIO header on the Raspberry Pi in the C programming language. As of release 0.1.0, this library is only intended for the Raspberry Pi 4 Model B. *Do not use this library on older Raspberry Pi models.*
+The c-rpio library aims to provide functions for utilizing the functionality of the 40-pin GPIO header on the Raspberry Pi in the C programming language. As of release 2.0.0, this library is only intended for the Raspberry Pi 4 Model B. *Do not use this library on older Raspberry Pi models.*
 
 ## Notes
 - This library was written such that any function that uses the same name as an Arduino function operates in a similar manner.
