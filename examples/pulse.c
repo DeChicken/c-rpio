@@ -6,7 +6,9 @@
 
 int main() 
 {
-    // pins 12, 13, 18, and 19 have hardware PWM functionality
+    // pins 12, 13, 18, and 19 have hardware PWM functionality\
+    // You must set which pins you plan to use in config.txt of the pi
+    // See https://github.com/dotnet/iot/blob/main/Documentation/raspi-pwm.md#enabling-hardware-pwm
     int pin = 13;
     time_t delay = 0;
     long delayms = 5;
@@ -21,12 +23,12 @@ int main()
     pinMode(pin, ALT0);
     while (1 == 1)
     {
-        for (int i = 0; i < 256; i++)
+        for (int i = 0; i < 257; i++)
         {
             analogWrite(pin, i);
             nanosleep(&delayts, NULL);
         }
-        for (int i = 255; i >= 0; i--)
+        for (int i = 256; i >= 0; i--)
         {
             analogWrite(pin, i);
             nanosleep(&delayts, NULL);
