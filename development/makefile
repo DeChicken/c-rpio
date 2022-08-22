@@ -17,7 +17,7 @@ all: ${OBJS} main
 	${CC} -c $<
 
 main: ${OBJS}
-	${CC} -o main ${OBJS}
+	${CC} -o main ${OBJS} -lm
 
 clean:
 	@echo 'Removing all objects and executables...'

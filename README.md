@@ -8,5 +8,6 @@ The c-rpio library aims to provide functions for utilizing the functionality of 
 ## Releases
 - 1.0.0 - Support for Raspberry Pi 4 Model B *ONLY*. Functionality for pinMode, digitalRead, and digitalWrite.
 - 2.0.0 - Added analogWrite and two example programs
+- 2.0.1 - Fixed bug that did not allow 100% duty cycle in analogWrite
 
 Shoutout to @stianeikeland and those who worked on https://github.com/stianeikeland/go-rpio for the naming inspiration!

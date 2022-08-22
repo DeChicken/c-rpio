@@ -1,57 +1,30 @@
 #include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <time.h>
+#include <math.h>
 #include "c-rpio.h"
 
 int main(void)
 {
-    int offset = 0x4;
     int pin = 13;
-    int value = 128;
+    int value = 0;
+    int perc = 0;
 
-    time_t delay = 0;
-    long delayms = 5;
-
-    int channel = 1;
-    int PWEN = 1;
-    int MODE = 0;
-    int RPTL = 0;
-    int SBIT = 0;
-    int POLA = 0;
-    int USEF = 0;
-    int MSEN = 0;
-
-    struct timespec delayts = {delay, delayms * 1000000};
-
-    //printf("pwm_cfg returns %d\n", pwm_cfg(channel, PWEN, MODE, RPTL, SBIT, POLA, USEF, MSEN));
-    //printf("pwm_cfg returns %d\n", pwm_cfg(channel + 1, PWEN, MODE, RPTL, SBIT, POLA, USEF, MSEN));
-    //printf("analogWrite returns %d\n", analogWrite(pin, value));
-
-    /*
-    pinMode(13, OUTPUT);
+    // Get desired percentage
     while (1 == 1)
     {
-        digitalWrite(13, HIGH);
-        nanosleep(&delayts, NULL);
-        digitalWrite(13, LOW);
-        nanosleep(&delayts, NULL);
-    }
-    */
-    
-    pinMode(pin, ALT0);
-    while (1 == 1)
-    {
-        for (int i = 0; i < 256; i++)
+        printf("Enter duty cycle as a percentage: ");
+        scanf("%d", &perc);
+
+        value = (int)floor(((double)perc / 100.0) * (double)PWM_DEFAULT_RANGE);
+
+        printf("value = %d\n", value);
+
+        if (value >= 0 && value <= 256)
         {
-            analogWrite(pin, i);
-            nanosleep(&delayts, NULL);
+            printf("Value to write: %d\n", value);
+            analogWrite(pin, value);
         }
-        for (int i = 255; i >= 0; i--)
-        {
-            analogWrite(pin, i);
-            nanosleep(&delayts, NULL);
-        }
+        else
+            printf("Value of %d is invalid\n");
     }
-    
+
 }
