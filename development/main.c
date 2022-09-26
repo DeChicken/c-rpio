@@ -1,30 +1,22 @@
 #include <stdio.h>
-#include <math.h>
+#include <unistd.h>
+#include <inttypes.h>
 #include "c-rpio.h"
 
 int main(void)
 {
-    int pin = 13;
-    int value = 0;
-    int perc = 0;
+    int tx_pin = 0;
+    int rx_pin = 1;
+    
+    // Setup pins for UART2
+    pinMode(tx_pin, ALT4);
+    pinMode(rx_pin, ALT4);
 
-    // Get desired percentage
-    while (1 == 1)
-    {
-        printf("Enter duty cycle as a percentage: ");
-        scanf("%d", &perc);
+    // Open file descriptor to UART2
+    FILE *uart2 = fopen("/dev/ttyAMA2", "rw");
 
-        value = (int)floor(((double)perc / 100.0) * (double)PWM_DEFAULT_RANGE);
+    fputc('o', uart2);
 
-        printf("value = %d\n", value);
-
-        if (value >= 0 && value <= 256)
-        {
-            printf("Value to write: %d\n", value);
-            analogWrite(pin, value);
-        }
-        else
-            printf("Value of %d is invalid\n");
-    }
-
+    // Close the file
+    fclose(uart2);
 }

@@ -27,6 +27,9 @@ static volatile void *gpio_ptr = NULL;
 // Pointer to the pwm physical memory, null until pwm_setup() is run
 static volatile void *pwm_ptr = NULL;
 
+// Pointer to the UART physical memory. NULL until cfg_uart has been run.
+static volatile void *uart_ptr = NULL;
+
 // printVersion
 // SUMMARY: Print c-rpio version
 // INPUTS:
@@ -38,24 +41,20 @@ void printVersion(void)
 	printf("c-rpio version %s\n", C_RPIO_VERSION);
 }
 
-// offsetIsValid
-// SUMMARY: determine GPIO offset validity
+// offset_aligned
+// SUMMARY: determine if an offset is aligned
 // INPUTS:
 //     offset - the offset to check
 // OUTPUTS:
 //     0 - offset is invalid
 //     1 - offset is valid
-static int offsetIsValid(int offset)
+static int offset_aligned(int offset)
 {
 	// Check that offset is valid
 	if (offset % 4 != 0)	// Offset not aligned
 		return 0;
-	
-	if ((offset < 0) || (offset > GPIO_REG_MAX_OFFSET))	// Offset out of range
-		return 0;
-	
-	// Passed the checks
-	return 1;
+	else					// Offset is aligned
+		return 1;
 }
 
 // pinIsValid
@@ -127,10 +126,10 @@ static uint32_t read_reg(volatile void **mempp, int offset)
 {
 	int flag = 1;	// This will go to 0 when function input is invalid
 
-	if (!offsetIsValid(offset))
+	if (!offset_aligned(offset))
 	{
 		// invalid offset
-		printf("[ERROR] read_reg() - Register offset of %d is invalid. Allowed register offsets are 0 through %d inclusive and must be aligned.\n", offset, GPIO_REG_MAX_OFFSET);
+		printf("[ERROR] read_reg() - Register offset of %d is invalid. Register offsets must be aligned.\n", offset);
 		flag = 0;
 	}
 
@@ -163,7 +162,7 @@ static int edit_reg_bits(volatile void **mempp, int offset, uint32_t bits, int l
         return 0;
 
     // offset
-    if (!offsetIsValid(offset))
+    if (!offset_aligned(offset))
         return 0;
 
     // bits (always valid)
@@ -228,7 +227,7 @@ int pinMode(int pin, int mode)
 {
     // Setup gpio_ptr if it is not yet setup
     if (gpio_ptr == NULL)
-        gpio_ptr = mem_setup(GPIO_BASE, GPIO_REG_MAX_OFFSET + 3);
+        gpio_ptr = mem_setup(GPIO_BASE, GPIO_MAX_REG_OFFSET + 3);
 
 	int flag = 1;
 
@@ -315,7 +314,7 @@ int digitalWrite(int pin, int level)
 {
 	// Setup gpio_ptr if it is not yet setup
     if (gpio_ptr == NULL)
-        gpio_ptr = mem_setup(GPIO_BASE, GPIO_REG_MAX_OFFSET + 3);
+        gpio_ptr = mem_setup(GPIO_BASE, GPIO_MAX_REG_OFFSET + 3);
 
 	// Error checking
 	int flag = 1;
@@ -350,7 +349,7 @@ int digitalWrite(int pin, int level)
 
 //-------------------------------------- PWM --------------------------------------//
 
-// pwm_cfg
+// cfg_pwm
 // SUMMARY: Set the PWM0 CTL register
 // INPUTS:
 //     channel - the pwm channel
@@ -359,11 +358,11 @@ int digitalWrite(int pin, int level)
 //     -1 - write not successful
 //      0 - invalid inputs
 //      1 - write successful
-static int pwm_cfg(int channel, int PWEN, int MODE, int RPTL, int SBIT, int POLA, int USEF, int MSEN)
+static int cfg_pwm(int channel, int PWEN, int MODE, int RPTL, int SBIT, int POLA, int USEF, int MSEN)
 {
 	// Setup pwm_ptr if it has not already been done
 	if (pwm_ptr == NULL)
-		pwm_ptr = mem_setup(PWM_BASE, PWM_REG_MAX_OFFSET + 3);
+		pwm_ptr = mem_setup(PWM_BASE, PWM_MAX_REG_OFFSET + 3);
 
 	// Verify inputs 
 	// channel
@@ -412,7 +411,7 @@ static int pwm_cfg(int channel, int PWEN, int MODE, int RPTL, int SBIT, int POLA
 }
 
 
-// pwm_cfg_clr
+// cfg_pwm_clr
 // SUMMARY: Clear the PWM0 CTL register
 // INPUTS:
 //     channel - the pwm channel
@@ -420,9 +419,9 @@ static int pwm_cfg(int channel, int PWEN, int MODE, int RPTL, int SBIT, int POLA
 //     -1 - write not successful
 //      0 - invalid inputs
 //      1 - write successful
-static int pwm_cfg_clr(int channel)
+static int cfg_pwm_clr(int channel)
 {
-	return pwm_cfg(channel, 0, 0, 0, 0, 0, 0, 0);
+	return cfg_pwm(channel, 0, 0, 0, 0, 0, 0, 0);
 }
 
 // analogWrite
@@ -438,7 +437,7 @@ int analogWrite(int pin, int value)
 {
 	// Setup pwm_ptr if it has not already been done
 	if (pwm_ptr == NULL)
-		pwm_ptr = mem_setup(PWM_BASE, PWM_REG_MAX_OFFSET + 3);
+		pwm_ptr = mem_setup(PWM_BASE, PWM_MAX_REG_OFFSET + 3);
 	
 	int flag = 1;
 
@@ -494,7 +493,7 @@ int analogWrite(int pin, int value)
 		};
 
 		// Set up CTL for M/S mode and begin PWM
-		return pwm_cfg(channel, aw_cfg[0], aw_cfg[1], aw_cfg[2], aw_cfg[3], aw_cfg[4], aw_cfg[5], aw_cfg[6]);
+		return cfg_pwm(channel, aw_cfg[0], aw_cfg[1], aw_cfg[2], aw_cfg[3], aw_cfg[4], aw_cfg[5], aw_cfg[6]);
 	}
 	else
 		return 0;	// Invalid inputs
@@ -516,4 +515,35 @@ static void pwm_dump(void)
 	printf("RNG2 register:  "); printlnBin32(read_reg(&pwm_ptr, RNG2));
 	printf("DAT2 register:  "); printlnBin32(read_reg(&pwm_ptr, DAT2));
 	printf("FIF1 register:  "); printlnBin32(read_reg(&pwm_ptr, FIF1));
+}
+
+//-------------------------------------- UART --------------------------------------//
+
+int cfg_uart(int uart_num)
+{
+	uart_ptr = NULL;
+	int uart_base;
+	switch (uart_num)
+	{
+		case 0:
+			uart_base = UART0_BASE;
+			break;
+		case 2:
+			uart_base = UART2_BASE;
+			break;
+		case 3:
+			uart_base = UART3_BASE;
+			break;
+		case 4:
+			uart_base = UART4_BASE;
+			break;
+		case 5:
+			uart_base = UART5_BASE;
+			break;
+		default:
+			return -1;	// Fail
+	}
+
+	//uart_ptr = mem_setup(uart_base, UART_MAX_REG_OFFSET);
+	printf("mem_setup() returns: %x\n", mem_setup(uart_base, UART_MAX_REG_OFFSET));
 }
