@@ -1,0 +1,13 @@
+#include <stdio.h>
+
+int main(void)
+{
+    FILE *fp; // Variable to represent open file
+    fp = fopen("/dev/ttyAMA1", "rw"); // Open file for reading
+    
+    int c = 'o';
+    
+    fputc(c, fp);
+    printf("Character '%s' sent\n", c); // Print char to stdout
+    fclose(fp); // Close the file when done
+}
