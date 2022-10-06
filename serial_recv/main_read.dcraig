@@ -1,8 +1,0 @@
-#include <stdio.h>
-#include <unistd.h>
-#include <fcntl.h>
-
-int main(void)
-{
-    fd = open("/home/pi/C/serial_recv/text.txt");
-}
