@@ -2,16 +2,12 @@
 #define PI_GPIO_H   // define it (declare)
 
 #include <inttypes.h>
+#include <termios.h>
 
 // Addresses
 #define BCM2711_PERI_BASE 0xFE000000				// Refer to Sec 1.2.4 in BCM2711 Datasheet
 #define GPIO_BASE (BCM2711_PERI_BASE + 0x200000)	// Refer to Sec 5.2 in BCM2711 Datasheet
 #define PWM_BASE (BCM2711_PERI_BASE + 0X20C000)		// Refer to Sec 8.6 in BCM2711 Datasheet
-#define UART0_BASE (BCM2711_PERI_BASE + 0x201000)   // Refer to Sec 11.5 in BCM2711 Datasheet
-#define UART2_BASE (BCM2711_PERI_BASE + 0x201400)   // Refer to Sec 11.5 in BCM2711 Datasheet
-#define UART3_BASE (BCM2711_PERI_BASE + 0x201600)   // Refer to Sec 11.5 in BCM2711 Datasheet
-#define UART4_BASE (BCM2711_PERI_BASE + 0x201800)   // Refer to Sec 11.5 in BCM2711 Datasheet
-#define UART5_BASE (BCM2711_PERI_BASE + 0x201A00)   // Refer to Sec 11.5 in BCM2711 Datasheet
 
 // Offsets
 #define GPFSEL0 0x0		// GPFSEL0 offset from GPIO_BASE
@@ -33,7 +29,6 @@
 #define MAX_PIN_INDEX 27			// Maxmimum GPIO pin index
 #define GPIO_MAX_REG_OFFSET 0xF0	// Max register offset from GPIO_BASE
 #define PWM_MAX_REG_OFFSET 0x24		// Max register offset from PWM_BASE
-#define UART_MAX_REG_OFFSET 0x8C    // Max register offset from UART#_BASE
 
 // Constants
 #define GPFSEL_OPT_LEN 3	// GPFSEL registers option length (bits)
@@ -67,6 +62,12 @@ int analogWrite(int pin, int value);
 void printVersion(void);
 
 // DEVELOPMENT
-int cfg_uart(int uart_num);
+int serial_begin(char *device, speed_t baud_rate);
+
+int serial_close(int fd);
+
+int serial_write(int fd, void *data, size_t size);
+
+int serial_available(int fd);
 
 #endif              // End of the #ifndef PI_GPIO_H

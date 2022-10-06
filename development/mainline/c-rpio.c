@@ -10,6 +10,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
+#include <termios.h>
+#include <poll.h>
 #include "c-rpio.h"		// Constants defined here
 
 // Version
@@ -26,9 +29,6 @@ static volatile void *gpio_ptr = NULL;
 
 // Pointer to the pwm physical memory, null until pwm_setup() is run
 static volatile void *pwm_ptr = NULL;
-
-// Pointer to the UART physical memory. NULL until cfg_uart has been run.
-static volatile void *uart_ptr = NULL;
 
 // printVersion
 // SUMMARY: Print c-rpio version
@@ -519,31 +519,108 @@ static void pwm_dump(void)
 
 //-------------------------------------- UART --------------------------------------//
 
-int cfg_uart(int uart_num)
+static int open_port(char *device)
 {
-	uart_ptr = NULL;
-	int uart_base;
-	switch (uart_num)
-	{
-		case 0:
-			uart_base = UART0_BASE;
-			break;
-		case 2:
-			uart_base = UART2_BASE;
-			break;
-		case 3:
-			uart_base = UART3_BASE;
-			break;
-		case 4:
-			uart_base = UART4_BASE;
-			break;
-		case 5:
-			uart_base = UART5_BASE;
-			break;
-		default:
-			return -1;	// Fail
-	}
+    int fd;     // Initialize file descriptor
+    int delay = 250 * 1000; // Delay between program continuation and port opening
 
-	//uart_ptr = mem_setup(uart_base, UART_MAX_REG_OFFSET);
-	printf("mem_setup() returns: %x\n", mem_setup(uart_base, UART_MAX_REG_OFFSET));
+    fd = open(
+        device, 
+        O_RDWR | 
+        O_NOCTTY | 
+        O_NDELAY
+        );
+
+    // Test to see if file was opened correctly
+    if (fd == -1)
+        // Port was not opened...
+        printf("[ERROR] open_port() - Unable to open %s\n", device);
+    else
+        // Port was opened correctly...
+        fcntl(fd, F_SETFL, 0);
+    
+    usleep(delay);  // Port opening delay (safety)
+
+    return fd;  // Return the file descriptor
+}
+
+static int set_up_port(int fd, speed_t baud_rate)
+{
+    struct termios serialSet;
+    memset(&serialSet, 0, sizeof(serialSet));
+    serialSet.c_iflag = IGNBRK;
+    serialSet.c_cflag = CS8 | CREAD | CLOCAL;
+    memset(serialSet.c_cc, _POSIX_VDISABLE, NCCS);
+    serialSet.c_cc[VMIN] = 0;
+    serialSet.c_cc[VTIME] = 0;
+    cfsetispeed(&serialSet, baud_rate);        // Set input expected speed to baud_rate
+    cfsetospeed(&serialSet, baud_rate);        // Set output expected speed to baud_rate
+    if (tcsetattr(fd, TCSANOW, &serialSet) == -1)
+    {
+		printf("[ERROR] set_up_port() - Failed to set up serial port\n");
+		return 0;
+	}
+	else
+		return 1;
+}
+
+// serial_begin
+// SUMMARY: Set up a tty device for reading/writing
+// INPUTS:
+//     device - The full path to the tty device file
+//     baud_rate - The baud rate to set
+// OUTPUTS:
+//     -1 - Fail
+//     fd - The file descriptor of the open tty device
+int serial_begin(char *device, speed_t baud_rate)
+{
+	// Verify inputs
+		// verifying...
+
+	// Open and set up serial port
+	int fd = open_port(device);
+	if (fd == -1)
+		return -1;	// Fail
+	
+	if (set_up_port(fd, baud_rate) == 0)
+		return -1;
+
+	// If no failure occured, the port is set up. Return the file descriptor
+	return fd;
+}
+
+// serial_close
+// SUMMARY: Close a device
+// INPUTS:
+//     fd - The file descriptor of the stream
+// OUTPUTS:
+//     -1 - Fail
+//      0 - Success
+int serial_close(int fd)
+{
+	return close(fd);
+}
+
+int serial_write(int fd, void *data, size_t size)
+{
+	// Write data
+    tcflush(fd, TCIOFLUSH);     		// Clear input and output buffers on the UART
+    int n = write(fd, data, size);		// n is number of bytes written
+    if (n == -1)
+        printf("[ERROR] serial_write() - Failed to write to file descriptor %d.\n", fd);
+	return n;	// Return number of bytes written
+}
+
+int serial_available(int fd)
+{
+	// Poll the fd
+    struct pollfd src;      // Struct used by poll()
+    src.fd = fd;			// File descriptor
+    src.events = POLLIN;	// There is data to read
+    src.revents = 0;		// No returned events
+
+	if (poll(&src, 1, -1) == 1)
+		return 1;	// New data
+	else
+		return 0;	// No new data
 }
