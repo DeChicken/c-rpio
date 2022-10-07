@@ -16,7 +16,7 @@
 #include "c-rpio.h"		// Constants defined here
 
 // Version
-#define C_RPIO_VERSION "2.0.1"
+#define C_RPIO_VERSION "2.1.0"
 
 // PHILOSOPHY
 // Make any functions a user might touch easy to debug
