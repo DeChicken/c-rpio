@@ -7,17 +7,24 @@
 int main(void)
 {
     char *dev = "/dev/ttyAMA1";
-    speed_t baud_rate;
+    speed_t baud_rate = B4800;
 
     int UART = serial_begin(dev, baud_rate);
 
-    int myInt = 0XF0F0F0F0;
+    char c[] = "Glizzy";
 
-    //serial_write(UART, &myInt, sizeof(myInt));
+    printf("Glizzy is %d bytes long\n", sizeof(c));
+
+    serial_write(UART, c, sizeof(c));
 
     if (serial_available(UART))
         printf("Data is ready\n");
     else
         printf("Data not ready\n");
+    
+    char res[10] = "";
+    serial_read(UART, res, sizeof(c));
+    printf("res is %s\n", res);
 
+    serial_close(UART);
 }

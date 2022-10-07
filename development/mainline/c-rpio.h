@@ -70,4 +70,6 @@ int serial_write(int fd, void *data, size_t size);
 
 int serial_available(int fd);
 
+ssize_t serial_read(int fd, void *buf, size_t size);
+
 #endif              // End of the #ifndef PI_GPIO_H

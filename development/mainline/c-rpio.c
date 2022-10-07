@@ -624,3 +624,10 @@ int serial_available(int fd)
 	else
 		return 0;	// No new data
 }
+
+ssize_t serial_read(int fd, void *buf, size_t size)
+{
+	// Non-blocking read
+    fcntl(fd, F_SETFL, FNDELAY);
+    return read(fd, buf, size);
+}
